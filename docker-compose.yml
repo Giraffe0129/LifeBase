@@ -1,0 +1,27 @@
+version: "3.8"
+
+services:
+  app:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=sqlite+aiosqlite:///./app.db
+      - QWEATHER_API_KEY=${QWEATHER_API_KEY:-}
+      - CORS_ORIGINS=http://localhost:5173,http://localhost:8000
+    volumes:
+      - app-data:/app/data
+    restart: unless-stopped
+
+  # 生产环境使用 PostgreSQL（可选）
+  # db:
+  #   image: postgres:16-alpine
+  #   environment:
+  #     POSTGRES_DB: my_app
+  #     POSTGRES_PASSWORD: change_me
+  #   volumes:
+  #     - pg-data:/var/lib/postgresql/data
+
+volumes:
+  app-data:
+  # pg-data:
