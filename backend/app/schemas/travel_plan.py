@@ -1,4 +1,4 @@
-"""出行计划 请求/响应 数据验证"""
+"""出行计划 请求/响应 数据验证 - 支持排序"""
 from pydantic import BaseModel, Field
 from typing import Optional
 from datetime import datetime
@@ -19,6 +19,7 @@ class TravelPlanUpdate(BaseModel):
     start_time: Optional[str] = None
     notes: Optional[str] = None
     completed: Optional[bool] = None
+    sort_order: Optional[int] = None
 
 
 class TravelPlanResponse(BaseModel):
@@ -32,6 +33,7 @@ class TravelPlanResponse(BaseModel):
     weather_tip: str
     temperature: str
     completed: bool
+    sort_order: int
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
 

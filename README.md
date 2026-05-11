@@ -1,41 +1,105 @@
 # My Awesome App 🚀
 
-**多端互通任务 / 出行 / 笔记管理应用**
+**多端互通任务 / 出行 / 笔记管理 · 离线可用 · 桌面 EXE + 移动 App**
 
-手机和电脑实时同步，一个后端管所有端。支持 PWA 可安装到手机桌面，体验接近原生 App。
-
----
-
-## 功能总览
-
-| 功能 | 说明 |
-|------|------|
-| 📋 **当前任务** | 多端添加/完成/删除任务，WebSocket 实时同步，支持优先级 |
-| 🗺️ **出行计划** | 创建出行计划时自动查询目的地天气预报，雨天提醒带伞，提供乘车码跳转 |
-| 📝 **值得记录** | Markdown 笔记，分"知识点"和"生活碎片"两大类，支持标签和收藏 |
+> 非技术人员也能用！下载即用，云端同步，无需懂代码。
 
 ---
 
-## 技术栈
+## 目录
 
-| 层级 | 技术 | 说明 |
-|------|------|------|
-| **前端** | Vue 3 + TypeScript + Vite | 响应式 SPA，组件化开发 |
-| **状态管理** | Pinia | 全局数据状态 + WebSocket 实时更新 |
-| **后端** | FastAPI + Python 3.12 | 高性能异步 API，自动生成 Swagger 文档 |
-| **数据库** | SQLite (开发) / PostgreSQL (生产) | SQLAlchemy ORM，轻松切换 |
-| **实时同步** | WebSocket | 多端数据实时推送 |
-| **天气** | 和风天气 API | 自动查询目的地天气预报 |
-| **PWA** | vite-plugin-pwa | 支持手机桌面安装 |
-| **部署** | Docker Compose | 一键启动 |
+- [📱 快速使用（非技术人员）](#-快速使用非技术人员)
+- [☁️ 部署后端到云服务器](#️-部署后端到云服务器)
+- [💻 本地开发](#-本地开发)
+- [🏗️ 架构说明](#️-架构说明)
+- [📖 用户指南](#-用户指南)
+- [🔧 常见问题](#-常见问题)
 
 ---
 
-## 快速开始
+## 📱 快速使用（非技术人员）
 
-### 方式一：本地开发
+### 方式一：Windows 桌面端（推荐）
 
-#### 1. 启动后端
+1. 从发布页面下载 **My Awesome App Setup.exe**
+2. 双击安装，一路下一步
+3. 打开软件，注册账号
+4. 进入 **设置** → 配置和风天气 API Key（[免费申请](https://dev.qweather.com)）
+5. 开始使用！
+
+> 桌面端使用 Electron 构建，自动检查更新。
+
+### 方式二：手机端（PWA，无需应用商店）
+
+1. 在手机浏览器中打开部署好的后端地址（如 `https://your-app.railway.app`）
+2. 首次加载后，**添加到桌面**（iOS: Safari 分享按钮 → 添加到主屏幕；Android: Chrome 菜单 → 添加到主屏幕）
+3. 桌面图标启动后，注册账号即可使用
+4. 支持**离线缓存**——没网也能查看和编辑，联网后自动同步
+
+### 首次使用配置
+
+```
+1. 注册账号 → 2. 进入设置 → 3. 配置天气 API Key → 4. 开始使用
+```
+
+> API Key 配置在**设置页**内完成，无需修改任何代码文件。
+
+---
+
+## ☁️ 部署后端到云服务器
+
+### 选项一：Railway（推荐，最快）
+
+[![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/template/your-template)
+
+1. 点击上方按钮，将 GitHub 仓库连接到 Railway
+2. 添加 PostgreSQL 插件（Railway 自动配置）
+3. 设置环境变量：
+   - `SECRET_KEY`：任意随机字符串（用于 JWT 加密）
+   - `QWEATHER_API_KEY`：你的和风天气 API Key（可选，用户也可自行配置）
+4. 部署完成后，Railway 会提供一个 `https://xxx.up.railway.app` 地址
+5. 手机和电脑端都使用这个地址访问
+
+### 选项二：Docker + VPS
+
+```bash
+# 1. 安装 Docker 和 docker-compose
+
+# 2. 克隆项目
+git clone https://github.com/your-username/my-awesome-app.git
+cd my-awesome-app
+
+# 3. 创建 .env 文件
+echo "SECRET_KEY=your_random_secret_here" > .env
+echo "DB_PASSWORD=your_db_password" >> .env
+echo "QWEATHER_API_KEY=your_qweather_key" >> .env
+
+# 4. 启动（自动运行 PostgreSQL + 应用）
+docker-compose up -d
+
+# 5. 访问 http://your-server-ip:8000
+```
+
+### 选项三：Render
+
+1. 在 [Render](https://render.com) 创建新的 **Web Service**
+2. 连接 GitHub 仓库
+3. 选择 **Docker** 环境
+4. 添加 PostgreSQL 数据库（Render 内置）
+5. 设置环境变量同上
+6. 部署后获得 `https://your-app.onrender.com` 地址
+
+---
+
+## 💻 本地开发
+
+###  prerequisites
+
+- Python 3.12+
+- Node.js 20+
+- PostgreSQL（可选，开发时可用 SQLite 替代）
+
+### 1. 启动后端（SQLite，零配置）
 
 ```bash
 cd backend
@@ -47,17 +111,13 @@ python -m venv .venv
 
 pip install -r requirements.txt
 
-# 修改 .env 文件中的配置（可选）
-# 申请和风天气 API Key: https://dev.qweather.com
-
+# 修改 .env 中的 SECRET_KEY（随便填一个随机字符串）
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-后端启动后访问:
-- API 接口: http://localhost:8000/
-- Swagger 文档: http://localhost:8000/docs
+API 文档：http://localhost:8000/docs
 
-#### 2. 启动前端
+### 2. 启动前端
 
 ```bash
 cd frontend
@@ -65,113 +125,113 @@ npm install
 npm run dev
 ```
 
-前端启动后访问: http://localhost:5173
+前端地址：http://localhost:5173
 
-### 方式二：Docker 部署
+### 3. 构建桌面 EXE
 
 ```bash
-docker-compose up -d
-```
-
-访问 http://localhost:8000
-
----
-
-## API 接口一览
-
-| 方法 | 路径 | 说明 |
-|------|------|------|
-| **任务** | | |
-| GET | `/api/tasks/` | 获取所有任务 |
-| POST | `/api/tasks/` | 创建任务 |
-| PUT | `/api/tasks/{id}` | 更新任务 |
-| DELETE | `/api/tasks/{id}` | 删除任务 |
-| **出行计划** | | |
-| GET | `/api/travel-plans/` | 获取所有出行计划 |
-| POST | `/api/travel-plans/` | 创建出行计划（自动查天气） |
-| PUT | `/api/travel-plans/{id}` | 更新出行计划 |
-| DELETE | `/api/travel-plans/{id}` | 删除出行计划 |
-| **笔记** | | |
-| GET | `/api/notes/` | 获取笔记列表（支持 `?category=life` 过滤） |
-| POST | `/api/notes/` | 创建笔记 |
-| PUT | `/api/notes/{id}` | 更新笔记 |
-| DELETE | `/api/notes/{id}` | 删除笔记 |
-| **WebSocket** | | |
-| WS | `/ws` | 实时同步连接 |
-
----
-
-## 项目结构
-
-```
-my_awesome_app/
-├── frontend/                   # Vue 3 前端
-│   ├── src/
-│   │   ├── api/               # API 客户端 + WebSocket
-│   │   ├── assets/            # 全局样式
-│   │   ├── pages/             # 三个功能页面
-│   │   ├── router/            # 路由配置
-│   │   ├── stores/            # Pinia 状态管理
-│   │   ├── App.vue            # 根组件
-│   │   └── main.ts            # 入口
-│   └── vite.config.ts         # 前端构建配置
-│
-├── backend/                    # FastAPI 后端
-│   ├── app/
-│   │   ├── api/               # 路由控制器
-│   │   │   ├── tasks.py       # 任务 CRUD
-│   │   │   ├── travel_plans.py # 出行计划 + 天气
-│   │   │   ├── notes.py       # 笔记 CRUD
-│   │   │   └── ws.py          # WebSocket 端点
-│   │   ├── core/              # 配置、数据库、WS 管理器
-│   │   ├── models/            # SQLAlchemy 数据模型
-│   │   ├── schemas/           # Pydantic 数据验证
-│   │   └── main.py            # FastAPI 入口
-│   ├── requirements.txt
-│   └── .env                   # 环境变量
-│
-├── docker-compose.yml          # 一键部署
-├── Dockerfile                  # 多阶段构建
-└── README.md
+cd frontend
+npm run build:electron
+# 输出在 frontend/dist-electron/
 ```
 
 ---
 
-## 扩展指南
+## 🏗️ 架构说明
 
-### 添加新功能模块
+### v2.0 新增特性
 
-1. **后端**：在 `backend/app/models/` 建新模型 → `backend/app/schemas/` 建验证 → `backend/app/api/` 建路由 → 在 `backend/app/main.py` 注册
-2. **前端**：在 `frontend/src/api/` 加 API 方法 → `frontend/src/stores/` 加状态 → `frontend/src/pages/` 建页面 → `frontend/src/router/` 加路由 → 在 `App.vue` 的底部导航加 tab
+| 特性 | 说明 |
+|------|------|
+| **云端部署** | 后端 + PostgreSQL 部署到云，7x24h 在线 |
+| **离线缓存** | IndexedDB + Service Worker，无网可读写，有网自动同步 |
+| **桌面 EXE** | Electron 打包，Windows 安装包，Claude 风格界面 |
+| **移动 App** | PWA 安装到手机桌面，体验接近原生 |
+| **用户系统** | 注册/登录，数据隔离，每个用户独立空间 |
+| **API Key 配置** | 用户在 App 内配置天气 API Key，无需碰代码 |
+| **Claude 风格 UI** | 桌面端侧边栏 + 响应式适配移动端 |
 
-### 切换到 MySQL/PostgreSQL
+### 架构图
 
-修改 `backend/.env` 中的 `DATABASE_URL`:
-
-```env
-# MySQL
-DATABASE_URL=mysql+asyncmy://user:password@localhost:3306/my_app
-
-# PostgreSQL
-DATABASE_URL=postgresql+asyncpg://user:password@localhost:5432/my_app
+```
+┌──────────────────────────────────────────────┐
+│               Cloud Backend                   │
+│   FastAPI + PostgreSQL (Railway / Render)     │
+│   - 用户认证 / JWT                            │
+│   - 任务 / 出行 / 笔记 CRUD                    │
+│   - 天气 API 代理                             │
+│   - WebSocket 实时推送                        │
+└───────────┬──────────────────────┬──────────┘
+            │ REST + WS            │ REST + WS
+       ┌────┴────┐           ┌────┴────┐
+       │ Desktop │           │ Mobile  │
+       │ (EXE)   │           │ (PWA)   │
+       │ Electron│           │         │
+       │ + Vue 3 │           │ Vue 3   │
+       │ + Dexie │           │ + Dexie │
+       │ (离线)   │           │ (离线)   │
+       └─────────┘           └─────────┘
 ```
 
-### 接入 AI 出行建议
+### 离线同步原理
 
-FastAPI 天然适配 AI Agent 生态：
-
-- 接入 OpenAI / 本地大模型 API，根据目的地和天气自动生成出行建议
-- 在 `travel_plans.py` 中添加一个 `POST /api/travel-plans/ai-suggest` 端点即可
+```
+在线:  操作 → API 请求 → 服务器 → IndexedDB 缓存 → 界面更新
+                                          ↑
+离线:  操作 → IndexedDB 存储 + 同步队列  ───┘
+         ↓ (恢复网络时)
+         自动推送队列 → API 请求 → 全量数据拉取 → 刷新本地
+```
 
 ---
 
-## 天气 API 配置
+## 📖 用户指南
 
-1. 前往 https://dev.qweather.com 注册免费账号
-2. 创建应用获取 API Key
-3. 将 Key 填入 `backend/.env` 的 `QWEATHER_API_KEY=` 中
+### 当前任务（📋）
 
-> 免费版支持每日 1000 次免费调用，个人使用完全足够。
+- 点击圆形复选框切换完成状态
+- 支持三级优先级：普通 / 重要 / 紧急
+- 已完成任务折叠在底部，可展开查看
+- 任意端操作后，其他端实时同步
+
+### 出行计划（🗺️）
+
+- 创建计划时填写目的地，**自动查询天气预报**
+- 雨天自动标记 🌂 带伞提醒
+- 填写日期和时间后按时间排序
+- 点击底部 **🚇 乘车码** 按钮（手机端）跳转支付宝乘车码
+
+### 值得记录（📝）
+
+- 分"知识点"和"生活碎片"两类
+- 支持 **Markdown** 格式编辑
+- 支持标签和收藏
+- 点击卡片查看详情（Markdown 渲染）
+
+### 设置（⚙️）
+
+- 配置和风天气 API Key（每个用户独立）
+- 查看版本信息和用户信息
+- 退出登录
+
+---
+
+## 🔧 常见问题
+
+**Q: 电脑关机后手机端还能用吗？**
+A: 如果后端部署到了云服务器（Railway/Render），则**可以**。后端 7x24h 运行，电脑关机不影响手机端使用。
+
+**Q: 离线时操作的数据会丢失吗？**
+A: **不会**。离线时数据保存在浏览器 IndexedDB 中，恢复网络时自动同步到服务器。
+
+**Q: 手机端怎么下载？**
+A: 不需要应用商店。在浏览器中打开 App 地址，使用"添加到主屏幕"功能即可。
+
+**Q: 和风天气 API Key 怎么获取？**
+A: 前往 https://dev.qweather.com 注册 → 创建应用 → 免费版每日 1000 次调用，个人使用完全足够。
+
+**Q: 数据安全吗？**
+A: 用户数据通过 JWT 认证隔离，每个人只能看到自己的数据。密码使用 bcrypt 加密存储。
 
 ---
 

@@ -1,6 +1,6 @@
-"""任务请求/响应 数据验证"""
+"""任务请求/响应 数据验证 - 支持排序"""
 from pydantic import BaseModel, Field
-from typing import Optional
+from typing import Optional, List
 from datetime import datetime
 
 
@@ -15,6 +15,12 @@ class TaskUpdate(BaseModel):
     description: Optional[str] = None
     completed: Optional[bool] = None
     priority: Optional[int] = Field(None, ge=0, le=2)
+    sort_order: Optional[int] = None
+
+
+class TaskBulkReorder(BaseModel):
+    """批量排序请求"""
+    orders: List[dict] = Field(..., description="排序列表: [{id: 1, sort_order: 0}, ...]")
 
 
 class TaskResponse(BaseModel):
@@ -23,6 +29,7 @@ class TaskResponse(BaseModel):
     description: str
     completed: bool
     priority: int
+    sort_order: int
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
 
