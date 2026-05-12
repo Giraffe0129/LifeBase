@@ -52,7 +52,7 @@ function logout() { auth.logout(); router.push('/login') }
   <div>
     <div class="claude-card">
       <div class="settings-section" style="margin-bottom: 0;">
-        <h3><span v-html="icons.settings" style="width:18px;height:18px;"></span> 用户信息</h3>
+        <h3><span v-html="icons.user" style="width:18px;height:18px;"></span> 用户信息</h3>
         <div class="text-sm" style="color: var(--muted-foreground);">
           <p>用户名：<strong style="color: var(--foreground);">{{ auth.user?.username || '未知' }}</strong></p>
           <p class="mt-8">ID：<code style="background: var(--muted); padding: 2px 8px; border-radius: 6px; font-size: 12px;">{{ auth.user?.id }}</code></p>
@@ -90,7 +90,7 @@ function logout() { auth.logout(); router.push('/login') }
 
     <div class="claude-card">
       <div class="settings-section" style="margin-bottom: 0;">
-        <h3>ℹ️ 关于</h3>
+        <h3><span v-html="icons.info" style="width:18px;height:18px;"></span> 关于</h3>
         <div class="desc">
           <p>版本：v3.0.0</p>
           <p class="mt-8">架构：云端部署 + 离线缓存 + 多端同步</p>

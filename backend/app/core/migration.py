@@ -12,8 +12,9 @@ logger = logging.getLogger(__name__)
 async def run_migrations(conn: AsyncConnection):
     """检查并执行所有需要的数据库迁移"""
 
-    # 1. tasks 表 - sort_order
+    # 1. tasks 表 - sort_order + parent_id
     await _add_column_if_not_exists(conn, "tasks", "sort_order", "INTEGER DEFAULT 0")
+    await _add_column_if_not_exists(conn, "tasks", "parent_id", "INTEGER REFERENCES tasks(id)")
 
     # 2. travel_plans 表 - sort_order
     await _add_column_if_not_exists(conn, "travel_plans", "sort_order", "INTEGER DEFAULT 0")

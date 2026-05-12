@@ -15,8 +15,8 @@ const showEditCatModal = ref(false)
 const detailNote = ref<any>(null)
 const newNote = ref({ title: '', content: '', tags: '', category: 'life', category_id: null as number | null })
 const submitting = ref(false)
-const catForm = ref({ name: '', icon: '📝', color: '#5D7052' })
-const editCatForm = ref({ id: 0, name: '', icon: '📝', color: '#5D7052' })
+const catForm = ref({ name: '', icon: 'penSquare', color: '#5D7052' })
+const editCatForm = ref({ id: 0, name: '', icon: 'penSquare', color: '#5D7052' })
 const catLoading = ref(false)
 
 // Drag
@@ -50,7 +50,14 @@ const currentCategory = computed(() => {
 function getCatName(id: number | null): string {
   if (!id) return '未分类'
   const c = store.getCategory(id)
-  return c ? `${c.icon} ${c.name}` : '未分类'
+  return c ? c.name : '未分类'
+}
+function getCatIconHtmlById(id: number | null): string {
+  if (!id) return ''
+  const c = store.getCategory(id)
+  if (!c) return ''
+  const svg = (icons.category as Record<string, string>)[c.icon]
+  return svg || c.icon
 }
 function getCatColor(id: number | null): string {
   if (!id) return 'var(--muted-foreground)'
@@ -76,21 +83,22 @@ async function addNote() {
     const data: any = { title: newNote.value.title.trim(), content: newNote.value.content.trim(), tags: newNote.value.tags.trim() }
     if (newNote.value.category_id) { data.category_id = newNote.value.category_id; data.category = 'custom' }
     else data.category = 'life'
-    await noteApi.create(data)
+    const result = await noteApi.create(data)
+    store.notes.push(result)
     newNote.value = { title: '', content: '', tags: '', category: 'life', category_id: null }
     showAddModal.value = false
   } catch (e: any) { alert(e.message || '创建失败') }
   finally { submitting.value = false }
 }
-async function deleteNote(id: number) { if (!confirm('确定删除？')) return; try { await noteApi.delete(id) } catch (e: any) { alert(e.message || '删除失败') } }
-async function toggleFavorite(note: any) { try { await noteApi.update(note.id, { is_favorite: !note.is_favorite }) } catch (e: any) { alert(e.message || '更新失败') } }
+async function deleteNote(id: number) { if (!confirm('确定删除？')) return; try { await noteApi.delete(id); store.notes = store.notes.filter(n => n.id !== id) } catch (e: any) { alert(e.message || '删除失败') } }
+async function toggleFavorite(note: any) { try { const updated = await noteApi.update(note.id, { is_favorite: !note.is_favorite }); Object.assign(note, updated) } catch (e: any) { alert(e.message || '更新失败') } }
 function viewDetail(note: any) { detailNote.value = note; showDetailModal.value = true }
 
 async function addCategory() {
   if (!catForm.value.name.trim()) return; catLoading.value = true
   try {
     await categoryApi.create({ name: catForm.value.name.trim(), icon: catForm.value.icon, color: catForm.value.color })
-    await store.fetchCategories(); catForm.value = { name: '', icon: '📝', color: '#5D7052' }; showCatModal.value = false
+    await store.fetchCategories(); catForm.value = { name: '', icon: 'penSquare', color: '#5D7052' }; showCatModal.value = false
   } catch (e: any) { alert(e.message || '创建分类失败') }
   finally { catLoading.value = false }
 }
@@ -108,18 +116,27 @@ async function deleteCategory(id: number) {
 }
 
 const colorOptions = ['#5D7052', '#C18C5D', '#A85448', '#D4A87D', '#78786C', '#8DA382', '#4A4A40', '#E6DCCD']
-const iconOptions = ['📝', '🌟', '📚', '💡', '🎯', '🎨', '🏃', '🎵', '🍳', '🌍', '💻', '📖', '✍️', '🎬', '🏡', '❤️']
+const catIcons = ['penSquare', 'sparkles', 'lightbulb', 'target', 'palette', 'music', 'cookingPot', 'globe', 'monitor', 'bookMarked', 'film', 'home', 'heart', 'feather', 'smile', 'camera', 'shoppingCart', 'dumbbell', 'wallet', 'gift']
+
+function getCatIconHtml(iconName: string): string {
+  const svg = (icons.category as Record<string, string>)[iconName]
+  return svg || iconName
+}
 </script>
 
 <template>
   <div>
     <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 16px; flex-wrap: wrap;">
       <div class="claude-tabs">
-        <button class="claude-tab" :class="{ active: activeCategoryId === 'all' }" @click="activeCategoryId = 'all'">📋 全部</button>
+        <button class="claude-tab" :class="{ active: activeCategoryId === 'all' }" @click="activeCategoryId = 'all'">
+          <span v-html="icons.list" style="width:16px;height:16px;"></span> 全部
+        </button>
         <button v-for="cat in store.categories" :key="cat.id" class="claude-tab"
           :class="{ active: activeCategoryId === cat.id }"
           @click="activeCategoryId = cat.id" @contextmenu.prevent="openEditCat(cat)">
-          {{ cat.icon }} {{ cat.name }}
+          <span v-if="getCatIconHtml(cat.icon).startsWith('<')" v-html="getCatIconHtml(cat.icon)" style="width:18px;height:18px;display:inline-block;vertical-align:middle;"></span>
+          <template v-else>{{ cat.icon }}</template>
+          {{ cat.name }}
         </button>
       </div>
       <button class="btn btn-sm btn-ghost" @click="showCatModal = true" title="添加分类" style="font-size: 20px; width: 38px; height: 38px; padding: 0; border-radius: 50%; border: 1.5px dashed var(--border); display: inline-flex; align-items: center; justify-content: center; color: var(--muted-foreground);">
@@ -128,7 +145,7 @@ const iconOptions = ['📝', '🌟', '📚', '💡', '🎯', '🎨', '🏃', '�
     </div>
 
     <div v-if="currentCategory" class="flex-center gap-8 mb-12" style="justify-content: flex-start;">
-      <span style="font-size: 16px;">{{ currentCategory.icon }}</span>
+      <span v-html="getCatIconHtmlById(currentCategory.id)" style="width:20px;height:20px;display:inline-flex;align-items:center;"></span>
       <span style="font-family: var(--font-heading); font-weight: 700; font-size: 15px;">{{ currentCategory.name }}</span>
       <button v-if="!currentCategory.is_builtin" class="btn btn-sm btn-ghost" @click="openEditCat(currentCategory)" style="font-size: 12px;">
         <span v-html="icons.edit" style="width:14px;height:14px;"></span>
@@ -148,7 +165,11 @@ const iconOptions = ['📝', '🌟', '📚', '💡', '🎯', '🎨', '🏃', '�
             <span v-if="note.is_favorite" v-html="icons.star" style="color: var(--secondary); width:16px;height:16px;flex-shrink:0;"></span>
           </div>
           <div style="display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap; align-items: center;">
-            <span class="category-badge" v-if="note.category_id" :style="{ background: getCatColor(note.category_id)+'20', color: getCatColor(note.category_id) }">{{ getCatName(note.category_id) }}</span>
+            <span class="category-badge" v-if="note.category_id" :style="{ background: getCatColor(note.category_id)+'20', color: getCatColor(note.category_id) }">
+              <span v-if="getCatIconHtmlById(note.category_id).startsWith('<')" v-html="getCatIconHtmlById(note.category_id)" style="width:14px;height:14px;display:inline-block;vertical-align:middle;"></span>
+              <template v-else>{{ getCatIconHtmlById(note.category_id) }}</template>
+              {{ getCatName(note.category_id) }}
+            </span>
             <span v-if="note.tags" v-for="tag in note.tags.split(',').filter(Boolean)" :key="tag" class="tag" style="background: var(--muted); color: var(--muted-foreground);">
               <span v-html="icons.hash" style="width:12px;height:12px;"></span>{{ tag.trim() }}
             </span>
@@ -184,7 +205,7 @@ const iconOptions = ['📝', '🌟', '📚', '💡', '🎯', '🎨', '🏃', '�
             <div class="input-group" style="flex: 1"><label>分类</label>
               <select v-model="newNote.category_id" class="input-field">
                 <option :value="null">未分类</option>
-                <option v-for="cat in store.categories" :key="cat.id" :value="cat.id">{{ cat.icon }} {{ cat.name }}</option>
+                <option v-for="cat in store.categories" :key="cat.id" :value="cat.id">{{ cat.name }}</option>
               </select></div>
           </div>
           <button class="btn btn-primary btn-block mt-12" :disabled="!newNote.title.trim() || submitting" @click="addNote">{{ submitting ? '保存中...' : '保存记录' }}</button>
@@ -203,7 +224,11 @@ const iconOptions = ['📝', '🌟', '📚', '💡', '🎯', '🎨', '🏃', '�
             <button class="btn btn-sm btn-ghost" @click="showDetailModal = false" v-html="icons.close"></button>
           </div>
           <div style="display: flex; gap: 6px; margin-bottom: 12px; flex-wrap: wrap; align-items: center;">
-            <span class="category-badge" v-if="detailNote.category_id" :style="{ background: getCatColor(detailNote.category_id)+'20', color: getCatColor(detailNote.category_id) }">{{ getCatName(detailNote.category_id) }}</span>
+            <span class="category-badge" v-if="detailNote.category_id" :style="{ background: getCatColor(detailNote.category_id)+'20', color: getCatColor(detailNote.category_id) }">
+              <span v-if="getCatIconHtmlById(detailNote.category_id).startsWith('<')" v-html="getCatIconHtmlById(detailNote.category_id)" style="width:14px;height:14px;display:inline-block;vertical-align:middle;"></span>
+              <template v-else>{{ getCatIconHtmlById(detailNote.category_id) }}</template>
+              {{ getCatName(detailNote.category_id) }}
+            </span>
             <span v-if="detailNote.tags" v-for="tag in detailNote.tags.split(',').filter(Boolean)" :key="tag" class="tag" style="background: var(--muted); color: var(--muted-foreground);">#{{ tag.trim() }}</span>
           </div>
           <div class="markdown-preview" v-html="renderMarkdown(detailNote.content)"></div>
@@ -221,7 +246,9 @@ const iconOptions = ['📝', '🌟', '📚', '💡', '🎯', '🎨', '🏃', '�
           <div class="input-group"><label>分类名称</label><input v-model="catForm.name" class="input-field" placeholder="例如：每日感想" @keyup.enter="addCategory" /></div>
           <div class="input-group"><label>图标</label>
             <div style="display: flex; flex-wrap: wrap; gap: 6px;">
-              <button v-for="icon in iconOptions" :key="icon" class="btn btn-sm" :class="catForm.icon === icon ? 'btn-primary' : 'btn-secondary'" @click="catForm.icon = icon" style="font-size: 18px; width: 42px; height: 42px; padding: 0;">{{ icon }}</button>
+              <button v-for="iconName in catIcons" :key="iconName" class="btn btn-sm" :class="catForm.icon === iconName ? 'btn-primary' : 'btn-secondary'" @click="catForm.icon = iconName" style="width: 42px; height: 42px; padding: 0; display: inline-flex; align-items: center; justify-content: center;">
+                <span v-html="getCatIconHtml(iconName)" style="width:20px;height:20px;color:var(--foreground);"></span>
+              </button>
             </div>
           </div>
           <div class="input-group"><label>颜色</label>
@@ -245,7 +272,9 @@ const iconOptions = ['📝', '🌟', '📚', '💡', '🎯', '🎨', '🏃', '�
           <div class="input-group"><label>名称</label><input v-model="editCatForm.name" class="input-field" @keyup.enter="updateCategory" /></div>
           <div class="input-group"><label>图标</label>
             <div style="display: flex; flex-wrap: wrap; gap: 6px;">
-              <button v-for="icon in iconOptions" :key="icon" class="btn btn-sm" :class="editCatForm.icon === icon ? 'btn-primary' : 'btn-secondary'" @click="editCatForm.icon = icon" style="font-size: 18px; width: 42px; height: 42px; padding: 0;">{{ icon }}</button>
+              <button v-for="iconName in catIcons" :key="iconName" class="btn btn-sm" :class="editCatForm.icon === iconName ? 'btn-primary' : 'btn-secondary'" @click="editCatForm.icon = iconName" style="width: 42px; height: 42px; padding: 0; display: inline-flex; align-items: center; justify-content: center;">
+                <span v-html="getCatIconHtml(iconName)" style="width:20px;height:20px;color:var(--foreground);"></span>
+              </button>
             </div>
           </div>
           <div class="input-group"><label>颜色</label>

@@ -28,9 +28,11 @@ function onDragEnd() {
 }
 function resetDrag() { dragIndex.value = null; dragOverIndex.value = null }
 
-// Time Picker
+// ③ + ④ Time Picker: default = current time, year hidden behind "跨年" button
 const showTimePicker = ref(false)
 const pickerMode = ref<'date' | 'time'>('date')
+const showYearPicker = ref(false) // ③ cross-year toggle
+
 const now = new Date()
 const pickerYear = ref(now.getFullYear())
 const pickerMonth = ref(now.getMonth() + 1)
@@ -38,15 +40,27 @@ const pickerDay = ref(now.getDate())
 const pickerHour = ref(now.getHours())
 const pickerMinute = ref(now.getMinutes())
 
-const years = computed(() => { const y = []; for (let i = 2020; i <= 2040; i++) y.push(i); return y })
+const years = computed(() => { const y = []; for (let i = 2022; i <= 2040; i++) y.push(i); return y })
 const months = computed(() => Array.from({ length: 12 }, (_, i) => i + 1))
 const daysInMonth = computed(() => new Date(pickerYear.value, pickerMonth.value, 0).getDate())
 const days = computed(() => Array.from({ length: daysInMonth.value }, (_, i) => i + 1))
 const hours = computed(() => Array.from({ length: 24 }, (_, i) => i))
 const minutes = computed(() => Array.from({ length: 60 }, (_, i) => i))
 
-function openDatePicker() { pickerMode.value = 'date'; showTimePicker.value = true }
-function openTimePicker() { pickerMode.value = 'time'; showTimePicker.value = true }
+function openDatePicker() {
+  // Reset to current date each time
+  const n = new Date()
+  pickerYear.value = n.getFullYear(); pickerMonth.value = n.getMonth() + 1; pickerDay.value = n.getDate()
+  showYearPicker.value = false
+  pickerMode.value = 'date'
+  showTimePicker.value = true
+}
+function openTimePicker() {
+  const n = new Date()
+  pickerHour.value = n.getHours(); pickerMinute.value = n.getMinutes()
+  pickerMode.value = 'time'
+  showTimePicker.value = true
+}
 function confirmPicker() {
   if (pickerMode.value === 'date') {
     newPlan.value.plan_date = `${pickerYear.value}-${String(pickerMonth.value).padStart(2,'0')}-${String(pickerDay.value).padStart(2,'0')}`
@@ -84,11 +98,12 @@ async function addPlan() {
   if (!newPlan.value.title.trim()) return
   submitting.value = true
   try {
-    await travelPlanApi.create({
+    const result = await travelPlanApi.create({
       title: newPlan.value.title.trim(), destination: newPlan.value.destination.trim(),
       plan_date: newPlan.value.plan_date, start_time: newPlan.value.start_time,
       notes: newPlan.value.notes.trim(),
     })
+    store.travelPlans.push(result)
     const n = new Date()
     newPlan.value = { title: '', destination: '', plan_date: '', start_time: '', notes: '' }
     pickerYear.value = n.getFullYear(); pickerMonth.value = n.getMonth() + 1; pickerDay.value = n.getDate()
@@ -97,8 +112,8 @@ async function addPlan() {
   } catch (e: any) { alert(e.message || '创建失败') }
   finally { submitting.value = false }
 }
-async function deletePlan(id: number) { if (!confirm('确定删除？')) return; try { await travelPlanApi.delete(id) } catch (e: any) { alert(e.message || '删除失败') } }
-async function toggleComplete(plan: any) { try { await travelPlanApi.update(plan.id, { completed: !plan.completed }) } catch (e: any) { alert(e.message || '更新失败') } }
+async function deletePlan(id: number) { if (!confirm('确定删除？')) return; try { await travelPlanApi.delete(id); store.travelPlans = store.travelPlans.filter(p => p.id !== id) } catch (e: any) { alert(e.message || '删除失败') } }
+async function toggleComplete(plan: any) { try { const updated = await travelPlanApi.update(plan.id, { completed: !plan.completed }); Object.assign(plan, updated) } catch (e: any) { alert(e.message || '更新失败') } }
 function openPaymentApp() {
   if (!/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) { alert('请在手机端打开使用乘车码'); return }
   window.location.href = 'alipays://platformapi/startapp?appId=200001235'
@@ -131,9 +146,15 @@ function openPaymentApp() {
               :style="{ textDecoration: plan.completed ? 'line-through' : 'none' }">{{ plan.title }}</h3>
           </div>
           <div style="display: flex; flex-wrap: wrap; gap: 8px; font-size: 13px; color: var(--muted-foreground);">
-            <span v-if="plan.destination" style="display: flex; align-items: center; gap: 4px;"><span v-html="icons.travel" style="width:14px;height:14px;"></span> {{ plan.destination }}</span>
-            <span v-if="plan.plan_date" style="display: flex; align-items: center; gap: 4px;">📅 {{ plan.plan_date }}</span>
-            <span v-if="plan.start_time" style="display: flex; align-items: center; gap: 4px;">⏰ {{ plan.start_time }}</span>
+            <span v-if="plan.destination" style="display: flex; align-items: center; gap: 4px;">
+              <span v-html="icons.mapPin" style="width:14px;height:14px;flex-shrink:0;"></span> {{ plan.destination }}
+            </span>
+            <span v-if="plan.plan_date" style="display: flex; align-items: center; gap: 4px;">
+              <span v-html="icons.calendar" style="width:14px;height:14px;flex-shrink:0;"></span> {{ plan.plan_date }}
+            </span>
+            <span v-if="plan.start_time" style="display: flex; align-items: center; gap: 4px;">
+              <span v-html="icons.clock" style="width:14px;height:14px;flex-shrink:0;"></span> {{ plan.start_time }}
+            </span>
           </div>
 
           <div v-if="plan.weather_tip && store.settings?.weather_enabled !== false"
@@ -185,13 +206,15 @@ function openPaymentApp() {
             <div class="input-group" style="flex: 1" @click="openDatePicker">
               <label>日期</label>
               <div class="input-field" style="cursor: pointer; display: flex; align-items: center; gap: 8px;">
-                📅 <span :style="{ color: newPlan.plan_date ? 'var(--foreground)' : 'var(--muted-foreground)' }">{{ newPlan.plan_date || '选择日期' }}</span>
+                <span v-html="icons.calendar" style="width:16px;height:16px;flex-shrink:0;"></span>
+                <span :style="{ color: newPlan.plan_date ? 'var(--foreground)' : 'var(--muted-foreground)' }">{{ newPlan.plan_date || '选择日期' }}</span>
               </div>
             </div>
             <div class="input-group" style="flex: 1" @click="openTimePicker">
               <label>时间</label>
               <div class="input-field" style="cursor: pointer; display: flex; align-items: center; gap: 8px;">
-                ⏰ <span :style="{ color: newPlan.start_time ? 'var(--foreground)' : 'var(--muted-foreground)' }">{{ newPlan.start_time || '选择时间' }}</span>
+                <span v-html="icons.clock" style="width:16px;height:16px;flex-shrink:0;"></span>
+                <span :style="{ color: newPlan.start_time ? 'var(--foreground)' : 'var(--muted-foreground)' }">{{ newPlan.start_time || '选择时间' }}</span>
               </div>
             </div>
           </div>
@@ -207,7 +230,7 @@ function openPaymentApp() {
       </div>
     </transition>
 
-    <!-- Time Picker -->
+    <!-- ③+④ Scrollable Time Picker (year hidden behind toggle) -->
     <transition name="fade">
       <div v-if="showTimePicker" class="modal-overlay" @click.self="showTimePicker = false">
         <div class="modal-window" style="max-width: 360px;">
@@ -215,20 +238,39 @@ function openPaymentApp() {
             <h3>{{ pickerMode === 'date' ? '选择日期' : '选择时间' }}</h3>
             <button class="btn btn-sm btn-ghost" @click="showTimePicker = false" v-html="icons.close"></button>
           </div>
-          <div v-if="pickerMode === 'date'" class="time-picker-container">
-            <div><div class="time-picker-label text-center">年</div>
-              <div class="time-picker-column"><div class="time-picker-highlight"></div>
-                <div v-for="y in years" :key="y" class="time-picker-item" :class="{ selected: y === pickerYear }" @click="pickerYear = y">{{ y }}</div>
-              </div></div>
-            <div><div class="time-picker-label text-center">月</div>
-              <div class="time-picker-column"><div class="time-picker-highlight"></div>
-                <div v-for="m in months" :key="m" class="time-picker-item" :class="{ selected: m === pickerMonth }" @click="pickerMonth = m">{{ String(m).padStart(2,'0') }}</div>
-              </div></div>
-            <div><div class="time-picker-label text-center">日</div>
-              <div class="time-picker-column"><div class="time-picker-highlight"></div>
-                <div v-for="d in days" :key="d" class="time-picker-item" :class="{ selected: d === pickerDay }" @click="pickerDay = d">{{ String(d).padStart(2,'0') }}</div>
-              </div></div>
+
+          <div v-if="pickerMode === 'date'" class="time-picker-container" style="flex-direction: column; gap: 4px;">
+            <!-- Month + Day (default view) -->
+            <div style="display: flex; gap: 12px; justify-content: center;">
+              <div><div class="time-picker-label text-center">月</div>
+                <div class="time-picker-column" style="height: 160px;">
+                  <div class="time-picker-highlight"></div>
+                  <div v-for="m in months" :key="m" class="time-picker-item" :class="{ selected: m === pickerMonth }" @click="pickerMonth = m">{{ String(m).padStart(2,'0') }}</div>
+                </div></div>
+              <div><div class="time-picker-label text-center">日</div>
+                <div class="time-picker-column" style="height: 160px;">
+                  <div class="time-picker-highlight"></div>
+                  <div v-for="d in days" :key="d" class="time-picker-item" :class="{ selected: d === pickerDay }" @click="pickerDay = d">{{ String(d).padStart(2,'0') }}</div>
+                </div></div>
+            </div>
+            <!-- ③ Cross-year toggle button -->
+            <button class="btn btn-sm btn-ghost" @click="showYearPicker = !showYearPicker"
+              style="display: flex; align-items: center; gap: 6px; margin: 0 auto; padding: 6px 16px; border: 1px dashed var(--border); border-radius: var(--radius-pill);">
+              <span v-html="showYearPicker ? icons.chevronUp : icons.chevronDown" style="width:14px;height:14px;"></span>
+              {{ showYearPicker ? '隐藏年份' : '跨年计划？' }}
+            </button>
+            <!-- Year (hidden by default, shown when toggle is active) -->
+            <transition name="fade">
+              <div v-if="showYearPicker" style="display: flex; justify-content: center;">
+                <div><div class="time-picker-label text-center">年</div>
+                  <div class="time-picker-column" style="height: 120px;">
+                    <div class="time-picker-highlight"></div>
+                    <div v-for="y in years" :key="y" class="time-picker-item" :class="{ selected: y === pickerYear }" @click="pickerYear = y">{{ y }}</div>
+                  </div></div>
+              </div>
+            </transition>
           </div>
+
           <div v-else class="time-picker-container">
             <div><div class="time-picker-label text-center">时</div>
               <div class="time-picker-column"><div class="time-picker-highlight"></div>
@@ -239,6 +281,7 @@ function openPaymentApp() {
                 <div v-for="m in minutes" :key="m" class="time-picker-item" :class="{ selected: m === pickerMinute }" @click="pickerMinute = m">{{ String(m).padStart(2,'0') }}</div>
               </div></div>
           </div>
+
           <div style="display: flex; gap: 8px; margin-top: 16px;">
             <button class="btn btn-secondary" style="flex:1" @click="showTimePicker = false">取消</button>
             <button class="btn btn-primary" style="flex:1" @click="confirmPicker">确定</button>

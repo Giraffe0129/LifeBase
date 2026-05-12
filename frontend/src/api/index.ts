@@ -41,6 +41,7 @@ async function onlineRequest<T>(url: string, options?: RequestInit): Promise<T> 
 export interface TaskItem {
   id: number
   user_id?: number
+  parent_id?: number | null
   title: string
   description: string
   completed: boolean
@@ -53,7 +54,10 @@ export interface TaskItem {
 export const taskApi = {
   list: () => onlineRequest<TaskItem[]>('/api/tasks/'),
 
-  create: async (data: { title: string; description?: string; priority?: number }) => {
+  getSubtasks: (taskId: number) =>
+    onlineRequest<TaskItem[]>(`/api/tasks/${taskId}/subtasks`),
+
+  create: async (data: { title: string; description?: string; priority?: number; parent_id?: number }) => {
     try {
       const result = await onlineRequest<TaskItem>('/api/tasks/', {
         method: 'POST',

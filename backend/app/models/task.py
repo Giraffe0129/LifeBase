@@ -1,4 +1,4 @@
-"""任务 / 当前任务 数据模型 - 支持拖拽排序"""
+"""任务 / 当前任务 数据模型 - 支持拖拽排序 + 子任务"""
 import datetime
 from sqlalchemy import String, Boolean, DateTime, Text, Integer, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -11,6 +11,7 @@ class Task(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), nullable=False, comment="所属用户")
+    parent_id: Mapped[int] = mapped_column(Integer, ForeignKey("tasks.id"), nullable=True, default=None, comment="父任务ID（子任务专用）")
     title: Mapped[str] = mapped_column(String(255), nullable=False, comment="任务标题")
     description: Mapped[str] = mapped_column(Text, nullable=True, default="", comment="任务描述")
     completed: Mapped[bool] = mapped_column(Boolean, default=False, comment="是否完成")
@@ -27,11 +28,14 @@ class Task(Base):
     )
 
     user = relationship("User", backref="tasks")
+    parent = relationship("Task", remote_side=[id], back_populates="subtasks")
+    subtasks = relationship("Task", back_populates="parent", cascade="all, delete-orphan")
 
     def to_dict(self):
         return {
             "id": self.id,
             "user_id": self.user_id,
+            "parent_id": self.parent_id,
             "title": self.title,
             "description": self.description or "",
             "completed": self.completed,
