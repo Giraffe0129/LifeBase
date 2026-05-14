@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref, computed } from 'vue'
+import { onMounted, onUnmounted, ref, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { connectWebSocket } from './api'
 import { useAppStore } from './stores/useAppStore'
@@ -56,11 +56,9 @@ onMounted(() => {
 
 onUnmounted(() => { if (themeTimer) clearInterval(themeTimer) })
 
-// Data loading
-onMounted(async () => {
-  const restored = await auth.restoreSession()
-  if (!restored && route.path !== '/login') { router.push('/login'); return }
-
+/** 从后端加载数据（登录成功后也会调用） */
+async function loadAppData() {
+  if (!auth.isLoggedIn) return
   store.loading = true
   try {
     if (isOnline()) {
@@ -74,8 +72,33 @@ onMounted(async () => {
   finally { store.loading = false }
 
   if (isOnline()) {
+    wsRef.value?.close()
     wsRef.value = connectWebSocket((type, data) => store.handleWSMessage(type, data))
   }
+}
+
+// 初始加载：恢复 session 后加载数据
+onMounted(async () => {
+  const restored = await auth.restoreSession()
+  if (restored) {
+    await loadAppData()
+  }
+
+  // 监听登录/退出事件
+  watch(() => auth.token, async (newToken, oldToken) => {
+    if (newToken && !oldToken) {
+      // 刚刚登录 → 加载数据
+      await loadAppData()
+    } else if (!newToken) {
+      // 退出登录 → 清空数据
+      store.tasks = []
+      store.travelPlans = []
+      store.notes = []
+      store.settings = { weather_enabled: true, extras: {} }
+      wsRef.value?.close()
+      wsRef.value = null
+    }
+  })
 
   onNetworkChange(() => {
     if (isOnline()) {

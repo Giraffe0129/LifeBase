@@ -1,0 +1,30 @@
+[33mcommit eba8054f093ef24bee9f9bc21300a3db1401f84f[m[33m ([m[1;36mHEAD[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m, [m[1;31mdeploy/main[m[33m, [m[1;32mmain[m[33m)[m
+Author: Giraffe0129 <3012074063@qq.com>
+Date:   Tue May 12 08:35:08 2026 +0800
+
+    1.去除emoje的iccon图标，使用lucide的icons 2.“当前任务”部分新增了子任务功能 3.出行计划部分更改为默认不显示年份，但是有跨年计划依旧是可以进行选择
+
+[33mcommit 01f8540499a64c2e4450033e1ebd946b4c96880f[m
+Author: Giraffe0129 <3012074063@qq.com>
+Date:   Tue May 12 07:57:29 2026 +0800
+
+    1.优化操作体验 2.优化前端界面 3.可直接生成桌面exe和手机spk文件
+
+[33mcommit 6b0bfcf8886d84e91e5665f230e8d1c7c0a6612f[m
+Merge: 17f2303 70f2da8
+Author: Giraffe0129 <3012074063@qq.com>
+Date:   Sun May 10 16:07:37 2026 +0800
+
+    Merge branch 'main' of https://github.com/giraffe0129/LifeBase
+
+[33mcommit 70f2da820f8d2222d3c212432ed0c119625d807e[m
+Author: Giraffe0129 <3012074063@qq.com>
+Date:   Sun May 10 15:54:28 2026 +0800
+
+    Initial commit
+
+[33mcommit 17f2303a65dc793edf93003650c03aff62286baa[m
+Author: Giraffe0129 <3012074063@qq.com>
+Date:   Sun May 10 15:42:01 2026 +0800
+
+    Initial commit: My Awesome App

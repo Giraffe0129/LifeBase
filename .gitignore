@@ -26,3 +26,9 @@ dist/
 # OS
 .DS_Store
 Thumbs.db
+render.yaml
+frontend/dist-electron/
+env/vibe_coding_env01/
+frontend/android/
+frontend/node_modules/
+env/

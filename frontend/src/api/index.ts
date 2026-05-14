@@ -7,7 +7,23 @@
 import { isOnline } from '@/db/localDB'
 import { updateLocalCache, removeLocalCache, enqueueSync } from '@/db/sync'
 
-const BASE_URL = import.meta.env.PROD ? '' : ''
+// 生产环境（Electron 打包后）：API 请求指向本地后端
+// 开发环境：由 Vite proxy 转发到 localhost:8000
+// Android/Capacitor：修改下面的地址为你电脑的局域网 IP
+//
+// ⚠️ 部署 APK 前请检查：
+//   1. 手机和电脑是否在同一个 WiFi 下
+//   2. 电脑的局域网 IP 是否与下面一致（cmd 输入 ipconfig 查看 IPv4 地址）
+//   3. 后端服务器是否已启动（uvicorn）
+//   4. 电脑防火墙是否放行了 8000 端口
+const CAPACITOR_SERVER = import.meta.env.VITE_API_URL || 'http://192.168.3.53:8000'
+const BASE_URL = import.meta.env.PROD
+  ? (window as any).electronAPI?.isElectron
+    ? 'http://localhost:8000'
+    : typeof (window as any).Capacitor !== 'undefined'
+      ? CAPACITOR_SERVER
+      : ''
+  : ''
 
 /** 获取带认证头的请求配置（直接从 localStorage 读取，避免对 Pinia 的依赖） */
 function authHeaders(): Record<string, string> {
@@ -19,16 +35,41 @@ function authHeaders(): Record<string, string> {
 
 /** 在线请求封装 */
 async function request<T>(url: string, options?: RequestInit): Promise<T> {
-  const res = await fetch(`${BASE_URL}${url}`, {
-    headers: authHeaders(),
-    ...options,
-  })
-  if (res.status === 204) return undefined as T
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({ detail: '请求失败' }))
-    throw new Error(err.detail || `HTTP ${res.status}`)
+  try {
+    const res = await fetch(`${BASE_URL}${url}`, {
+      headers: authHeaders(),
+      ...options,
+    })
+    if (res.status === 204) return undefined as T
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ detail: '请求失败' }))
+      throw new Error(err.detail || `HTTP ${res.status}`)
+    }
+    return res.json()
+  } catch (e: any) {
+    // 网络层面的错误（fetch 抛出 TypeError），例如：
+    // - CORS 拒绝
+    // - DNS 解析失败
+    // - 连接被拒绝 / 超时
+    // - Android 明文流量被拦截
+    if (e instanceof TypeError && e.message === 'Failed to fetch') {
+      const isCapacitor = typeof (window as any).Capacitor !== 'undefined'
+      const isElectron = !!(window as any).electronAPI?.isElectron
+      const baseUrl = BASE_URL || window.location.origin
+
+      let hint = '无法连接到服务器。'
+      if (isCapacitor) {
+        hint += `\n\n请检查：\n1. 手机和电脑是否连接同一个 WiFi\n2. 电脑端的后端服务是否已启动（端口 8000）\n3. 电脑的防火墙是否放行了 8000 端口\n4. 当前电脑 IP 是否为 ${CAPACITOR_SERVER.replace('http://', '').replace(':8000', '')}\n\n后端地址：${CAPACITOR_SERVER}\n可在 .env 文件中设置 VITE_API_URL 来自定义`
+      } else if (isElectron) {
+        hint += `请确保后端服务已启动。\n后端地址：${baseUrl}`
+      } else {
+        hint += `请检查网络连接或后端服务是否正常运行。\n后端地址：${baseUrl}`
+      }
+      console.error('[API] 网络请求失败:', { url, baseUrl: BASE_URL, isCapacitor, isElectron, error: e })
+      throw new Error(hint)
+    }
+    throw e
   }
-  return res.json()
 }
 
 /** 安全地在线请求，失败时抛异常（让上层判断是否走离线） */
@@ -358,9 +399,15 @@ type WSCallback = (type: string, data: any) => void
 export function connectWebSocket(onMessage: WSCallback): WebSocket | null {
   if (!isOnline()) return null
 
+  const isElectron = !!(window as any).electronAPI?.isElectron
+  const isCapacitor = typeof (window as any).Capacitor !== 'undefined'
   const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
   const wsUrl = import.meta.env.PROD
-    ? `${protocol}//${window.location.host}/ws`
+    ? isElectron
+      ? 'ws://localhost:8000/ws'
+      : isCapacitor
+        ? 'ws://192.168.3.53:8000/ws'
+        : `${protocol}//${window.location.host}/ws`
     : `ws://${window.location.hostname}:8000/ws`
 
   const ws = new WebSocket(wsUrl)

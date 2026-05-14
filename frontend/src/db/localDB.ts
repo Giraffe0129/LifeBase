@@ -21,7 +21,7 @@ export interface SyncQueueItem {
   serverId?: number
   payload: any
   timestamp: number
-  synced: boolean
+  synced: number
 }
 
 class AppDatabase extends Dexie {

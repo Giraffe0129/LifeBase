@@ -17,6 +17,66 @@ const weatherEnabled = ref(true)
 const weatherSaving = ref(false)
 const isDark = ref(false)
 
+/** 网络诊断 */
+const diagLoading = ref(false)
+const diagResult = ref('')
+async function runNetworkDiag() {
+  diagLoading.value = true
+  diagResult.value = ''
+  const lines: string[] = []
+  const push = (s: string) => lines.push(s)
+
+  try {
+    push('=== 网络诊断报告 ===')
+    push(`时间: ${new Date().toLocaleString('zh-CN')}`)
+    push(`用户代理: ${navigator.userAgent.substring(0, 100)}`)
+    push(`在线状态: ${navigator.onLine ? '✅ 在线' : '❌ 离线'}`)
+
+    // 检测运行环境
+    const isCapacitor = typeof (window as any).Capacitor !== 'undefined'
+    const isElectron = !!(window as any).electronAPI?.isElectron
+    push(`运行环境: ${isCapacitor ? '📱 Capacitor (Android/iOS)' : isElectron ? '💻 Electron' : '🌐 浏览器/PWA'}`)
+
+    // 获取后端地址
+    const { authApi: _a, ..._rest } = await import('@/api')
+    const module = await import('@/api')
+    // 检查 BASE_URL
+    const BASE_URL = (module as any).BASE_URL
+    push(`后端 API 地址: ${BASE_URL || '(相对路径)'}`)
+
+    // 测试连接
+    const testUrl = BASE_URL ? `${BASE_URL}/api/auth/me` : '/api/auth/me'
+    push(`\n尝试连接: ${testUrl}`)
+    push('等待服务器响应...')
+
+    const controller = new AbortController()
+    const timeout = setTimeout(() => controller.abort(), 5000)
+    const res = await fetch(testUrl, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+      signal: controller.signal,
+    })
+    clearTimeout(timeout)
+    push(`状态码: ${res.status} ${res.statusText}`)
+    if (res.ok) push('✅ 服务器连接正常！')
+    else push(`⚠️ 服务器返回错误状态`)
+  } catch (e: any) {
+    if (e.name === 'AbortError') push('❌ 连接超时（5秒无响应）')
+    else if (e instanceof TypeError && e.message.includes('fetch')) {
+      push('❌ 网络请求失败 (Failed to fetch)')
+      push('  可能原因：')
+      push('  • 手机未连接到服务器所在网络')
+      push('  • 后端服务未启动')
+      push('  • 防火墙阻止了连接')
+      push('  • Android 明文 HTTP 被拦截（检查网络配置）')
+      push('  • CORS 跨域被阻止')
+    } else push(`❌ ${e.message || e}`)
+  }
+  push(`\n=== 诊断完成 ===`)
+  diagResult.value = lines.join('\n')
+  diagLoading.value = false
+}
+
 onMounted(() => {
   if (auth.user?.has_qweather_key) qweatherKey.value = '已配置'
   weatherEnabled.value = store.settings?.weather_enabled !== false
@@ -84,6 +144,21 @@ function logout() { auth.logout(); router.push('/login') }
             {{ saving ? '保存中...' : '保存配置' }}
           </button>
           <span v-if="saved" style="color: var(--primary); font-size: 13px; margin-left: 10px; font-weight: 600;">✓ 已保存</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="claude-card">
+      <div class="settings-section" style="margin-bottom: 0;">
+        <h3><span v-html="icons.info" style="width:18px;height:18px;"></span> 网络诊断</h3>
+        <div class="desc">如果你的移动端无法连接服务器，点击下方按钮进行诊断。</div>
+        <div style="padding: 12px 0;">
+          <button class="btn btn-sm" style="background: var(--muted); color: var(--foreground);" @click="runNetworkDiag">
+            {{ diagLoading ? '诊断中...' : '🛠️ 运行网络诊断' }}
+          </button>
+        </div>
+        <div v-if="diagResult" style="background: var(--muted); border-radius: var(--radius-md); padding: 12px 16px; font-size: 12px; font-family: monospace; white-space: pre-wrap; line-height: 1.6;">
+          {{ diagResult }}
         </div>
       </div>
     </div>

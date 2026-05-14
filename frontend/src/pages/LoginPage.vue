@@ -40,9 +40,11 @@ async function submit() {
         <button class="login-tab" :class="{ active: mode === 'register' }" @click="mode = 'register'">注册</button>
       </div>
 
-      <div v-if="error" style="background: rgba(168,84,72,0.1); color: var(--destructive); padding: 10px 16px; border-radius: var(--radius-pill); font-size: 13px; margin-bottom: 20px; display: flex; align-items: center; gap: 8px; font-weight: 600;">
-        <span style="flex-shrink:0;" v-html="icons.close"></span>
-        <span>{{ error }}</span>
+      <div v-if="error" style="background: rgba(168,84,72,0.1); color: var(--destructive); padding: 12px 16px; border-radius: var(--radius-pill); font-size: 13px; margin-bottom: 20px; display: flex; flex-direction: column; gap: 4px; font-weight: 600;">
+        <div style="display: flex; align-items: flex-start; gap: 8px;">
+          <span style="flex-shrink:0; margin-top: 2px;" v-html="icons.close"></span>
+          <span style="white-space: pre-line;">{{ error }}</span>
+        </div>
       </div>
 
       <form @submit.prevent="submit">

@@ -20,7 +20,8 @@ class Settings(BaseSettings):
     SERVER_PORT: int = 8000
 
     # CORS
-    CORS_ORIGINS: str = "http://localhost:5173,http://localhost:5174,http://localhost:3000"
+    # 生产环境：在 .env 中设置为 "*" 或你的前端域名
+    CORS_ORIGINS: str = "http://localhost:5173,http://localhost:5174,http://localhost:3000,http://localhost"
 
     @property
     def cors_origins_list(self) -> List[str]:

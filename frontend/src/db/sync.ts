@@ -75,7 +75,7 @@ export async function enqueueSync(
     payload,
     localId,
     timestamp: Date.now(),
-    synced: false,
+    synced: 0,
   })
 }
 
@@ -85,7 +85,7 @@ export async function enqueueSync(
 export async function flushSyncQueue() {
   const queue = await db.syncQueue
     .where('synced')
-    .equals(false)
+    .equals(0)
     .sortBy('timestamp')
 
   for (const item of queue) {
@@ -105,7 +105,7 @@ export async function flushSyncQueue() {
 
       // 标记为已同步
       if (item.id !== undefined) {
-        await db.syncQueue.update(item.id, { synced: true })
+        await db.syncQueue.update(item.id, { synced: 1 })
       }
 
       console.log(`[Sync] 同步成功: ${item.action} ${item.entity} #${item.payload.id || ''}`)
@@ -119,13 +119,13 @@ export async function flushSyncQueue() {
   // 清理已同步的记录（保留最近 100 条以备案）
   const syncedItems = await db.syncQueue
     .where('synced')
-    .equals(true)
+    .equals(1)
     .count()
 
   if (syncedItems > 100) {
     const toDelete = await db.syncQueue
       .where('synced')
-      .equals(true)
+      .equals(1)
       .limit(syncedItems - 50)
       .toArray()
     for (const item of toDelete) {

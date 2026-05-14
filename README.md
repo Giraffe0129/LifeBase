@@ -1,123 +1,71 @@
-# My Awesome App 🚀
+# My Awesome App
 
-**多端互通任务 / 出行 / 笔记管理 · 离线可用 · 桌面 EXE + 移动 App**
-
-> 非技术人员也能用！下载即用，云端同步，无需懂代码。
+多端互通任务 · 出行 · 笔记管理 | 全栈 Web + 桌面端 + 移动端
 
 ---
 
-## 目录
+## 功能特性
 
-- [📱 快速使用（非技术人员）](#-快速使用非技术人员)
-- [☁️ 部署后端到云服务器](#️-部署后端到云服务器)
-- [💻 本地开发](#-本地开发)
-- [🏗️ 架构说明](#️-架构说明)
-- [📖 用户指南](#-用户指南)
-- [🔧 常见问题](#-常见问题)
+### 📋 当前任务
+- 创建/编辑/删除任务
+- **拖拽排序**（所有列表页均支持）
+- **子任务**：大任务拆分为多个小任务，可展开/收起
+- 优先级标签（普通 / ⭐重要 / 🔥紧急）
+- 已完成任务归档
 
----
+### 🗺️ 出行计划
+- 创建出行计划，填写目的地自动查询**天气预报**
+- **iOS 风格滚轮选择器**选择日期和时间
+- **天气可视化**：Lucide 天气图标 + 渐变背景（晴/雨/阴/雪）
+- 天气显示可在设置页开关
 
-## 📱 快速使用（非技术人员）
+### 📝 值得记录
+- Markdown 笔记编辑器
+- **自定义分类**（内置"生活碎片""知识点"，可新增/编辑/删除）
+- 标签系统，收藏功能
+- 笔记详情预览
 
-### 方式一：Windows 桌面端（推荐）
-
-1. 从发布页面下载 **My Awesome App Setup.exe**
-2. 双击安装，一路下一步
-3. 打开软件，注册账号
-4. 进入 **设置** → 配置和风天气 API Key（[免费申请](https://dev.qweather.com)）
-5. 开始使用！
-
-> 桌面端使用 Electron 构建，自动检查更新。
-
-### 方式二：手机端（PWA，无需应用商店）
-
-1. 在手机浏览器中打开部署好的后端地址（如 `https://your-app.railway.app`）
-2. 首次加载后，**添加到桌面**（iOS: Safari 分享按钮 → 添加到主屏幕；Android: Chrome 菜单 → 添加到主屏幕）
-3. 桌面图标启动后，注册账号即可使用
-4. 支持**离线缓存**——没网也能查看和编辑，联网后自动同步
-
-### 首次使用配置
-
-```
-1. 注册账号 → 2. 进入设置 → 3. 配置天气 API Key → 4. 开始使用
-```
-
-> API Key 配置在**设置页**内完成，无需修改任何代码文件。
+### ⚙️ 其他
+- 用户注册/登录（JWT 认证）
+- **离线缓存**（IndexedDB + 自动同步）
+- **WebSocket 实时同步**（多端数据实时更新）
+- **昼夜模式**（自动日出日落 + 手动切换）
+- **桌面便签模式**（Electron 系统托盘 + 始终置顶小窗口）
+- **PWA** / **Capacitor** 移动端原生打包
 
 ---
 
-## ☁️ 部署后端到云服务器
+## 快速开始
 
-### 选项一：Railway（推荐，最快）
+### 前置要求
+- Python 3.10+
+- Node.js 18+
+- npm 9+
 
-[![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/template/your-template)
-
-1. 点击上方按钮，将 GitHub 仓库连接到 Railway
-2. 添加 PostgreSQL 插件（Railway 自动配置）
-3. 设置环境变量：
-   - `SECRET_KEY`：任意随机字符串（用于 JWT 加密）
-   - `QWEATHER_API_KEY`：你的和风天气 API Key（可选，用户也可自行配置）
-4. 部署完成后，Railway 会提供一个 `https://xxx.up.railway.app` 地址
-5. 手机和电脑端都使用这个地址访问
-
-### 选项二：Docker + VPS
-
-```bash
-# 1. 安装 Docker 和 docker-compose
-
-# 2. 克隆项目
-git clone https://github.com/your-username/my-awesome-app.git
-cd my-awesome-app
-
-# 3. 创建 .env 文件
-echo "SECRET_KEY=your_random_secret_here" > .env
-echo "DB_PASSWORD=your_db_password" >> .env
-echo "QWEATHER_API_KEY=your_qweather_key" >> .env
-
-# 4. 启动（自动运行 PostgreSQL + 应用）
-docker-compose up -d
-
-# 5. 访问 http://your-server-ip:8000
-```
-
-### 选项三：Render
-
-1. 在 [Render](https://render.com) 创建新的 **Web Service**
-2. 连接 GitHub 仓库
-3. 选择 **Docker** 环境
-4. 添加 PostgreSQL 数据库（Render 内置）
-5. 设置环境变量同上
-6. 部署后获得 `https://your-app.onrender.com` 地址
-
----
-
-## 💻 本地开发
-
-###  prerequisites
-
-- Python 3.12+
-- Node.js 20+
-- PostgreSQL（可选，开发时可用 SQLite 替代）
-
-### 1. 启动后端（SQLite，零配置）
+### 1. 后端启动
 
 ```bash
 cd backend
-python -m venv .venv
-# Windows:
-.venv\Scripts\activate
-# Mac/Linux:
-# source .venv/bin/activate
 
+# 创建虚拟环境
+python -m venv venv
+source venv/bin/activate  # Linux/Mac
+# 或 venv\Scripts\activate  # Windows
+
+# 安装依赖
 pip install -r requirements.txt
 
-# 修改 .env 中的 SECRET_KEY（随便填一个随机字符串）
-uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+# 配置环境变量（可选）
+cp .env.example .env
+# 编辑 .env 填入你的配置
+
+# 启动开发服务器
+uvicorn app.main:app --reload --port 8000
 ```
 
-API 文档：http://localhost:8000/docs
+访问 http://localhost:8000/docs 查看 API 文档。
 
-### 2. 启动前端
+### 2. 前端启动
 
 ```bash
 cd frontend
@@ -125,116 +73,288 @@ npm install
 npm run dev
 ```
 
-前端地址：http://localhost:5173
+浏览器打开 http://localhost:5173。
 
-### 3. 构建桌面 EXE
+### 3. 桌面端（Electron）
 
 ```bash
 cd frontend
-npm run build:electron
-# 输出在 frontend/dist-electron/
+npm run dev:electron
+```
+
+**快捷键：**
+- `Ctrl/Cmd + Shift + S` — 切换主窗口/便签模式
+- `Ctrl/Cmd + Shift + X` — 关闭便签
+- `Esc` — 关闭便签
+- `← →` — 便签内切换模块
+
+### 4. 移动端（Capacitor）
+
+```bash
+cd frontend
+npm run build
+npx cap sync
+
+# Android
+npx cap open android
+# Android Studio 中打包 APK
+
+# iOS（仅 macOS）
+npx cap open ios
+# Xcode 中打包 IPA
 ```
 
 ---
 
-## 🏗️ 架构说明
+## 部署到服务器
 
-### v2.0 新增特性
+### 方案一：直接部署（Linux VPS）
 
-| 特性 | 说明 |
+```bash
+# 1. 后端
+cd backend
+pip install -r requirements.txt
+
+# 使用生产级 ASGI 服务器
+pip install gunicorn
+uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 4
+
+# 推荐使用 supervisor 或 systemd 管理进程
+# 或使用 Docker（见下方）
+```
+
+### 方案二：Docker 部署
+
+创建后端 `Dockerfile`：
+
+```dockerfile
+FROM python:3.11-slim
+WORKDIR /app
+COPY backend/ .
+RUN pip install -r requirements.txt
+EXPOSE 8000
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "4"]
+```
+
+```bash
+docker build -t my-awesome-app-backend .
+docker run -d -p 8000:8000 \
+  -e SECRET_KEY="your_random_secret_here" \
+  -e DATABASE_URL="sqlite+aiosqlite:///./app.db" \
+  my-awesome-app-backend
+```
+
+### 方案三：云平台部署
+
+**Render（推荐）**
+1. 在 `backend/` 目录放置 `render.yaml`：
+
+```yaml
+services:
+  - type: web
+    name: my-awesome-app
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DATABASE_URL
+        value: sqlite+aiosqlite:///./app.db
+```
+
+2. 连接 GitHub 仓库，Render 自动部署。
+
+### 部署后的前端配置
+
+构建前端并部署到静态托管（Vercel / Netlify / Cloudflare Pages）：
+
+```bash
+cd frontend
+npm run build
+# 将 dist/ 目录部署
+```
+
+在 `frontend/src/api/index.ts` 中，**生产环境**自动使用当前域名（不跨域），无需修改。
+如果前后端分离部署，需要设置 `VITE_API_BASE_URL` 环境变量指向后端地址。
+
+---
+
+## 开源到 GitHub — 隐私保护指南
+
+### ✅ 已经保护的内容
+以下已在 `.gitignore` 中排除：
+- `__pycache__/`, `node_modules/` — 编译缓存
+- `.env` — 环境变量（密钥、数据库密码）
+- `*.db`, `*.sqlite3` — 数据库文件（含用户数据）
+- `.idea/`, `.vscode/` — IDE 配置
+
+### 🔧 上传前请检查
+
+#### 1. 后端配置 (`backend/app/core/config.py`)
+SECRET_KEY 使用了默认占位符 `"change_this_to_a_random_secret_key_in_production"`，**无隐私泄露风险**。
+用户部署时必须自行修改。
+
+#### 2. 环境变量模板
+```bash
+# 创建 .env.example（已安全，不含真实密钥）
+cp backend/.env backend/.env.example
+```
+
+#### 3. 前端 API 地址
+`frontend/src/api/index.ts` 中：
+```typescript
+const BASE_URL = import.meta.env.PROD ? '' : ''
+```
+生产环境自动使用同域地址，不暴露任何服务器信息。
+
+#### 4. 数据库
+`backend/app.db` 已在 `.gitignore` 中排除。
+首次部署后会自动创建空数据库，不含任何用户数据。
+
+### 📝 开源步骤
+
+```bash
+# 1. 在项目根目录初始化 Git
+git init
+
+# 2. 添加所有文件
+git add .
+
+# 3. 检查是否有敏感文件
+git status
+# 确认以下不在列表中：
+#   ❌ backend/.env
+#   ❌ backend/app.db
+#   ❌ frontend/node_modules/
+#   ❌ __pycache__/
+#   ❌ .claude/
+
+# 4. 首次提交
+git commit -m "Initial commit: My Awesome App v3"
+
+# 5. 在 GitHub 创建仓库（不要勾选 Add README）
+
+# 6. 推送到 GitHub
+git remote add origin https://github.com/你的用户名/my-awesome-app.git
+git branch -M main
+git push -u origin main
+```
+
+### 🔐 部署生产环境时的安全注意事项
+
+| 项目 | 建议 |
 |------|------|
-| **云端部署** | 后端 + PostgreSQL 部署到云，7x24h 在线 |
-| **离线缓存** | IndexedDB + Service Worker，无网可读写，有网自动同步 |
-| **桌面 EXE** | Electron 打包，Windows 安装包，Claude 风格界面 |
-| **移动 App** | PWA 安装到手机桌面，体验接近原生 |
-| **用户系统** | 注册/登录，数据隔离，每个用户独立空间 |
-| **API Key 配置** | 用户在 App 内配置天气 API Key，无需碰代码 |
-| **Claude 风格 UI** | 桌面端侧边栏 + 响应式适配移动端 |
+| **SECRET_KEY** | 使用 `openssl rand -hex 32` 生成随机 64 位密钥 |
+| **数据库** | 生产环境使用 PostgreSQL，勿用 SQLite |
+| **HTTPS** | 必须启用 HTTPS（推荐 Cloudflare / Let's Encrypt） |
+| **CORS** | 在 `.env` 中限制为具体的生产域名 |
+| **密码** | 用户密码通过 bcrypt 哈希存储（已实现） |
+| **JWT** | Token 有效期为 30 天，生产环境可缩短 |
 
-### 架构图
+---
+
+## 技术栈
+
+| 层级 | 技术 |
+|------|------|
+| **前端框架** | Vue 3 + TypeScript |
+| **状态管理** | Pinia |
+| **路由** | Vue Router (Hash History) |
+| **构建工具** | Vite 5 |
+| **CSS** | 原生 CSS + CSS 变量（Organic/Natural 设计系统） |
+| **后端框架** | Python FastAPI |
+| **数据库 ORM** | SQLAlchemy 2.0 (Async) |
+| **数据库** | SQLite（开发）/ PostgreSQL（生产） |
+| **认证** | JWT (python-jose + passlib bcrypt) |
+| **实时通信** | WebSocket |
+| **离线同步** | Dexie.js (IndexedDB) |
+| **桌面端** | Electron |
+| **移动端** | Capacitor (Android/iOS) |
+| **天气 API** | 和风天气 (QWeather) |
+| **设计系统** | Organic/Natural（Fraunces + Nunito, Moss Green） |
+| **图标** | Lucide 风格 SVG |
+
+---
+
+## 项目结构
 
 ```
-┌──────────────────────────────────────────────┐
-│               Cloud Backend                   │
-│   FastAPI + PostgreSQL (Railway / Render)     │
-│   - 用户认证 / JWT                            │
-│   - 任务 / 出行 / 笔记 CRUD                    │
-│   - 天气 API 代理                             │
-│   - WebSocket 实时推送                        │
-└───────────┬──────────────────────┬──────────┘
-            │ REST + WS            │ REST + WS
-       ┌────┴────┐           ┌────┴────┐
-       │ Desktop │           │ Mobile  │
-       │ (EXE)   │           │ (PWA)   │
-       │ Electron│           │         │
-       │ + Vue 3 │           │ Vue 3   │
-       │ + Dexie │           │ + Dexie │
-       │ (离线)   │           │ (离线)   │
-       └─────────┘           └─────────┘
-```
-
-### 离线同步原理
-
-```
-在线:  操作 → API 请求 → 服务器 → IndexedDB 缓存 → 界面更新
-                                          ↑
-离线:  操作 → IndexedDB 存储 + 同步队列  ───┘
-         ↓ (恢复网络时)
-         自动推送队列 → API 请求 → 全量数据拉取 → 刷新本地
+my-awesome-app/
+├── backend/
+│   └── app/
+│       ├── api/          # RESTful API 路由
+│       │   ├── auth.py        # 用户认证
+│       │   ├── tasks.py       # 任务 CRUD + 子任务
+│       │   ├── travel_plans.py # 出行计划 + 天气
+│       │   ├── notes.py       # 笔记 CRUD + 分类
+│       │   ├── categories.py  # 自定义分类 CRUD
+│       │   ├── settings.py    # 用户设置
+│       │   └── ws.py          # WebSocket
+│       ├── core/         # 核心配置
+│       │   ├── config.py      # 环境变量配置
+│       │   ├── database.py    # 数据库引擎
+│       │   ├── auth.py        # JWT + 密码工具
+│       │   ├── ws_manager.py  # WebSocket 管理器
+│       │   └── migration.py   # 数据库迁移
+│       ├── models/       # 数据模型
+│       ├── schemas/      # Pydantic 验证
+│       └── main.py       # 应用入口
+│
+├── frontend/
+│   ├── src/
+│   │   ├── pages/       # 页面组件
+│   │   │   ├── LoginPage.vue
+│   │   │   ├── TasksPage.vue     # 当前任务
+│   │   │   ├── TravelPage.vue    # 出行计划
+│   │   │   ├── NotesPage.vue     # 值得记录
+│   │   │   ├── SettingsPage.vue  # 设置
+│   │   │   └── StickyPage.vue    # 便签模式
+│   │   ├── api/         # API 客户端
+│   │   ├── stores/      # Pinia 状态管理
+│   │   ├── db/          # IndexedDB + 同步引擎
+│   │   ├── utils/       # 工具函数、图标
+│   │   ├── assets/      # 全局样式
+│   │   ├── router/      # 路由配置
+│   │   ├── App.vue      # 根组件
+│   │   └── main.ts      # 入口
+│   ├── electron/        # Electron 主进程
+│   ├── capacitor.config.ts
+│   └── package.json
+│
+├── BUILD.md             # 本文件
+└── .gitignore
 ```
 
 ---
 
-## 📖 用户指南
+## API 文档
 
-### 当前任务（📋）
+启动后端后访问 http://localhost:8000/docs 查看交互式 Swagger 文档。
 
-- 点击圆形复选框切换完成状态
-- 支持三级优先级：普通 / 重要 / 紧急
-- 已完成任务折叠在底部，可展开查看
-- 任意端操作后，其他端实时同步
+**主要端点：**
 
-### 出行计划（🗺️）
-
-- 创建计划时填写目的地，**自动查询天气预报**
-- 雨天自动标记 🌂 带伞提醒
-- 填写日期和时间后按时间排序
-- 点击底部 **🚇 乘车码** 按钮（手机端）跳转支付宝乘车码
-
-### 值得记录（📝）
-
-- 分"知识点"和"生活碎片"两类
-- 支持 **Markdown** 格式编辑
-- 支持标签和收藏
-- 点击卡片查看详情（Markdown 渲染）
-
-### 设置（⚙️）
-
-- 配置和风天气 API Key（每个用户独立）
-- 查看版本信息和用户信息
-- 退出登录
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| POST | `/api/auth/register` | 注册 |
+| POST | `/api/auth/login` | 登录 |
+| GET/POST | `/api/tasks/` | 任务列表/创建 |
+| PUT | `/api/tasks/reorder/bulk` | 任务批量排序 |
+| GET | `/api/tasks/{id}/subtasks` | 获取子任务 |
+| GET/POST | `/api/travel-plans/` | 出行计划列表/创建 |
+| PUT | `/api/travel-plans/reorder/bulk` | 出行计划批量排序 |
+| GET/POST | `/api/notes/` | 笔记列表/创建 |
+| PUT | `/api/notes/reorder/bulk` | 笔记批量排序 |
+| GET/POST | `/api/categories/` | 分类列表/创建 |
+| GET/PUT | `/api/settings/` | 用户设置 |
+| WS | `/ws` | WebSocket 实时同步 |
 
 ---
 
-## 🔧 常见问题
+## 版本历史
 
-**Q: 电脑关机后手机端还能用吗？**
-A: 如果后端部署到了云服务器（Railway/Render），则**可以**。后端 7x24h 运行，电脑关机不影响手机端使用。
-
-**Q: 离线时操作的数据会丢失吗？**
-A: **不会**。离线时数据保存在浏览器 IndexedDB 中，恢复网络时自动同步到服务器。
-
-**Q: 手机端怎么下载？**
-A: 不需要应用商店。在浏览器中打开 App 地址，使用"添加到主屏幕"功能即可。
-
-**Q: 和风天气 API Key 怎么获取？**
-A: 前往 https://dev.qweather.com 注册 → 创建应用 → 免费版每日 1000 次调用，个人使用完全足够。
-
-**Q: 数据安全吗？**
-A: 用户数据通过 JWT 认证隔离，每个人只能看到自己的数据。密码使用 bcrypt 加密存储。
-
----
-
-## License
-
-MIT
+| 版本 | 说明 |
+|------|------|
+| v1.0.0 | 基础功能：任务、出行、笔记 CRUD |
+| v2.0.0 | 用户认证 + 离线同步 + PWA + WebSocket |
+| v3.0.0 | UI 重设计 + 拖拽排序 + 自定义分类 + 子任务 + 便签模式 + Capacitor |

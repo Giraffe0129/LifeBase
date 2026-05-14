@@ -1,9 +1,11 @@
 """FastAPI 应用入口"""
 import logging
+import os
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from app.core.config import settings as app_settings
 from app.core.database import init_db
@@ -47,11 +49,9 @@ app.include_router(settings.router)       # /api/settings/*
 app.include_router(ws.router)             # /ws
 
 
-@app.get("/")
-async def root():
-    return {
-        "message": "My Awesome App API v3",
-        "version": "3.0.0",
-        "docs": "/docs",
-        "status": "Cloud-ready with user auth + offline sync + custom categories + drag reorder",
-    }
+# 生产模式：服务前端静态文件（npm run build 后的 dist 目录）
+# 让前端和后端同端口，手机访问只需连一个地址
+frontend_dist = os.path.join(os.path.dirname(__file__), "..", "..", "frontend", "dist")
+if os.path.isdir(frontend_dist):
+    app.mount("/", StaticFiles(directory=frontend_dist, html=True), name="frontend")
+    logger.info(f"前端静态文件已挂载: {frontend_dist}")
